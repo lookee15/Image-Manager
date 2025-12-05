@@ -5,7 +5,7 @@ const path = require('path');
 const fs = require('fs');
 
 const app = express();
-const PORT = 3000;
+const PORT = 5000;
 
 // Serve static files from /public
 app.use(express.static(path.join(__dirname, 'public')));
@@ -16,27 +16,28 @@ app.get('/api/getImage', (req, res) => {
   if (!name) {
     return res.status(400).json({ error: 'Missing ?name parameter' });
   }
-  res.json({ filename: `${name}.jpg` });
+  // Assume user provided extension, e.g. "cat.png"
+  res.json({ filename: name });
 });
 
-// Multer setup (temporary storage)
+// Multer setup: temporary storage
 const upload = multer({ dest: 'uploads/' });
 
-// Route: Upload and replace image
+// Route: Upload image with user-provided name
 app.post('/api/upload', upload.single('image'), (req, res) => {
-  const name = req.query.name;
+  const name = req.query.name; // e.g. "cat.png"
   if (!name) {
     return res.status(400).json({ error: 'Missing ?name parameter' });
   }
 
-  const destPath = path.join(__dirname, 'public', `${name}.jpg`);
-
-  // Move uploaded file to /public with fixed name
+  const destPath = path.join(__dirname, 'public', name);
+  
+// Move uploaded file to /public with fixed name
   fs.rename(req.file.path, destPath, (err) => {
     if (err) {
       return res.status(500).json({ error: 'File save failed' });
     }
-    res.json({ message: `Image for ${name} uploaded successfully!` });
+    res.json({ message: `Image saved as ${name}`, filename: name });
   });
 });
 
