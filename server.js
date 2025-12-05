@@ -8,15 +8,20 @@ const app = express();
 const PORT = 5000;
 
 // Serve static files from /public
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'client','public')));
 
 // Route: Get image filename by name
 app.get('/api/getImage', (req, res) => {
-  const name = req.query.name;
+  let name = req.query.name;
   if (!name) {
     return res.status(400).json({ error: 'Missing ?name parameter' });
   }
-  // Assume user provided extension, e.g. "cat.png"
+
+  // If no extension, default to .jpg
+  if (!path.extname(name)) {
+    name = `${name}.jpg`;
+  }
+
   res.json({ filename: name });
 });
 
@@ -25,14 +30,18 @@ const upload = multer({ dest: 'uploads/' });
 
 // Route: Upload image with user-provided name
 app.post('/api/upload', upload.single('image'), (req, res) => {
-  const name = req.query.name; // e.g. "cat.png"
+  let name = req.query.name; // e.g. "cat" or "cat.png"
   if (!name) {
     return res.status(400).json({ error: 'Missing ?name parameter' });
   }
 
-  const destPath = path.join(__dirname, 'public', name);
-  
-// Move uploaded file to /public with fixed name
+  // If no extension, default to .jpg
+  if (!path.extname(name)) {
+    name = `${name}.jpg`;
+  }
+
+  const destPath = path.join(__dirname, 'client','public', name);
+
   fs.rename(req.file.path, destPath, (err) => {
     if (err) {
       return res.status(500).json({ error: 'File save failed' });
