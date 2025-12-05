@@ -17,6 +17,12 @@ function App() {
     }
     const res = await fetch(`/api/getImage?name=${searchName}`);
     const data = await res.json();
+
+    if (data.error) {
+      alert(data.error);
+      return;
+    }
+
     setImageUrl(`/${data.filename}?t=${Date.now()}`); // cache-buster
   };
 
@@ -30,12 +36,38 @@ function App() {
     const formData = new FormData();
     formData.append('image', file);
 
-    await fetch(`/api/upload?name=${uploadName}`, {
+    const res = await fetch(`/api/upload?name=${uploadName}`, {
       method: 'POST',
       body: formData,
     });
+    const data = await res.json();
 
-    alert(`Upload successful! Saved as ${uploadName}`);
+    if (data.error) {
+      alert(data.error);
+    } else {
+      alert(`Upload successful! Saved as ${uploadName}`);
+    }
+  };
+
+  // Delete handler
+  const handleDelete = async () => {
+    if (!searchName) {
+      alert('Please enter the image name to delete');
+      return;
+    }
+
+    const confirmDelete = window.confirm(`Are you sure you want to delete ${searchName}?`);
+    if (!confirmDelete) return;
+
+    const res = await fetch(`/api/deleteImage?name=${searchName}`, { method: 'DELETE' });
+    const data = await res.json();
+
+    if (data.error) {
+      alert(data.error);
+    } else {
+      alert(data.message);
+      setImageUrl(''); // clear image from UI
+    }
   };
 
   return (
@@ -50,12 +82,14 @@ function App() {
       />
       <button onClick={handleSearch}>Search</button>
       {imageUrl && (
-        <div>
-          <img
-            src={imageUrl}
-            alt={searchName}
-            style={{ width: '200px', marginTop: '10px' }}
-          />
+        <div style={{ marginTop: '10px' }}>
+          <img src={imageUrl} alt={searchName} style={{ width: '200px' }} />
+          <button
+            onClick={handleDelete}
+            style={{ marginLeft: '10px', backgroundColor: 'red', color: 'white' }}
+          >
+            Delete
+          </button>
         </div>
       )}
 
